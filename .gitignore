@@ -216,6 +216,12 @@ tempCodeRunnerFile.py
 
 # Marimo
 marimo/_static/
+
+# Secretos del proyecto - NUNCA al repositorio
+.env
+infra/certs/*.pem
+infra/ldap/generado/
+api/*.db
 marimo/_lsp/
 __marimo__/
 
