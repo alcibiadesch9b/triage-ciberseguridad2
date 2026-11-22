@@ -1,16 +1,22 @@
-# Triage - Sistema de acceso seguro
+﻿# Triage - Sistema de acceso seguro
 
 Proyecto final de Ciberseguridad II
-Universidad Tecnológica de Panamá
-Facultad de Ingeniería de Sistemas Computacionales
+Universidad Tecnologica de Panama
+Facultad de Ingenieria de Sistemas Computacionales
 
 **Facilitadora:** Mildred Echezano
 **Grupo:** 1S3122
 
 ## Integrantes
 
-- Alcibíades Chanis
+- Alcibiades Chanis
 - Marcos Navarro
 - Jennifer Yau
-- César de Lavega
+- Cesar de Lavega
 - Dereck Moreno
+
+## Descripcion
+
+Aplicacion web de gestion de incidentes de seguridad con identificacion
+sobre un directorio LDAP, autenticacion por OpenID Connect
+(Authorization Code + PKCE) y autorizacion por roles aplicada en el backend.

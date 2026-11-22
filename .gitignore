@@ -227,3 +227,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Secretos del proyecto - NUNCA al repositorio
+.env
+infra/certs/*.pem
+infra/ldap/generado/
+api/*.db
