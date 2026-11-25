@@ -1,32 +1,85 @@
 
-# Entorno virtual
+# Entornos virtuales
 venv/
 .venv/
 env/
+ENV/
+env.bak/
+venv.bak/
 
 # Python
 __pycache__/
 *.py[cod]
+*$py.class
+*.so
 
-# Variables de entorno
+# Variables de entorno y secretos
 .env
 .env.*
-
-# Certificados y llaves privadas
+.envrc
 *.key
 *.pem
 *.p12
 *.pfx
+*.pypirc
+.streamlit/secrets.toml
+
+# Certificados y archivos generados
+infra/certs/*.pem
+infra/ldap/generado/
 
 # Bases de datos locales
 *.db
 *.sqlite
 *.sqlite3
+api/*.db
+instance/
 
-# Logs
+# Logs y pruebas
 *.log
 logs/
+htmlcov/
+.tox/
+.nox/
+.pytest_cache/
+.coverage*
+.cache/
+.hypothesis/
+nosetests.xml
+coverage.xml
 
-# Archivos temporales
+# Archivos temporales y sistema
 .DS_Store
 Thumbs.db
+tempCodeRunnerFile.py
+
+# Distribución y empaquetado
+build/
+dist/
+*.egg-info/
+.eggs/
+wheels/
+*.manifest
+*.spec
+
+# Herramientas y editores
+.idea/
+.ruff_cache/
+.mypy_cache/
+.pyre/
+.pytype/
+.spyderproject
+.spyproject
+.ropeproject
+
+# Otros
+.ipynb_checkpoints/
+.ipython/
+.pybuilder/
+.pdm-python
+.pdm-build/
+.pixi/
+__pypackages__/
+.scrapy/
+.webassets-cache/
+docs/_build/
