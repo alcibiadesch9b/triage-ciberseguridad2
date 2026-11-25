@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Acceso | Triage{% endblock %}
+
+{% block content %}
+
+<div class="login-card">
+
+    <span class="eyebrow">PLATAFORMA DE CIBERSEGURIDAD</span>
+
+    <h2>Bienvenido a Triage</h2>
+
+    <p>
+        Sistema de gestión, seguimiento y análisis
+        de incidentes de ciberseguridad.
+    </p>
+
+    <p>
+        Accede mediante el proveedor de identidad
+        del proyecto.
+    </p>
+
+    <a class="button" href="{{ url_for('login') }}">
+        Iniciar sesión con Keycloak
+    </a>
+
+</div>
+
+{% endblock %}

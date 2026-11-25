@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo incidente | Triage{% endblock %}
+
+{% block content %}
+
+<div class="page-heading">
+    <div>
+        <span class="eyebrow">REGISTRO</span>
+        <h2>Nuevo incidente</h2>
+        <p>Describe el evento de seguridad que quieres reportar.</p>
+    </div>
+</div>
+
+<div class="content-card form-card">
+
+    {% if error %}
+    <div class="flash-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+
+        <label for="titulo">Título</label>
+        <input id="titulo" name="titulo" type="text" maxlength="120" required
+               value="{{ request.form.get('titulo', '') }}">
+
+        <label for="severidad">Severidad</label>
+        <select id="severidad" name="severidad" required>
+            {% for s in severidades %}
+            <option value="{{ s }}" {% if request.form.get('severidad') == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="descripcion">Descripción</label>
+        <textarea id="descripcion" name="descripcion" rows="6" maxlength="2000" required>{{ request.form.get('descripcion', '') }}</textarea>
+
+        <div class="form-actions">
+            <button class="primary-button" type="submit">Registrar incidente</button>
+            <a class="link-cancel" href="{{ url_for('incidentes') }}">Cancelar</a>
+        </div>
+    </form>
+
+</div>
+
+{% endblock %}

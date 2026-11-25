@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Mi perfil | Triage{% endblock %}
+
+{% block content %}
+
+<div class="page-heading">
+    <div>
+        <span class="eyebrow">CUENTA DE USUARIO</span>
+        <h2>Mi perfil</h2>
+        <p>Información de la cuenta autenticada mediante Keycloak.</p>
+    </div>
+</div>
+
+<div class="profile-card">
+
+    <div class="avatar">{{ (user.name or user.username or "U")[0]|upper }}</div>
+
+    <h2>{{ user.name or user.username }}</h2>
+
+    <p><strong>Nombre de usuario:</strong> {{ user.username }}</p>
+    <p><strong>Correo:</strong> {{ user.email }}</p>
+    <p><strong>Roles:</strong>
+        {% if user.roles %}{{ user.roles | join(", ") }}{% else %}Sin roles asignados{% endif %}
+    </p>
+
+</div>
+
+{% endblock %}

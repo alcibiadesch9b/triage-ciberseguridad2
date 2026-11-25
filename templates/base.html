@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}Triage{% endblock %}</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <div class="app-layout">
+
+        {% if session.user %}
+        <aside class="sidebar">
+
+            <div class="brand">
+                <div class="brand-icon">T</div>
+                <div>
+                    <h1>TRIAGE</h1>
+                    <span>SECURITY OPERATIONS</span>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <span class="sidebar-label">MENÚ PRINCIPAL</span>
+
+                <a href="{{ url_for('dashboard') }}" class="nav-link">
+                    <span class="nav-icon">▦</span>
+                    Panel principal
+                </a>
+
+                {% if puede('incidentes', 'R') %}
+                <a href="{{ url_for('incidentes') }}" class="nav-link">
+                    <span class="nav-icon">◈</span>
+                    Incidentes
+                </a>
+                {% endif %}
+
+                {% if puede('auditoria', 'R') %}
+                <a href="{{ url_for('auditoria') }}" class="nav-link">
+                    <span class="nav-icon">▤</span>
+                    Auditoría
+                </a>
+                {% endif %}
+
+                {% if puede('usuarios', 'R') %}
+                <a href="{{ url_for('admin') }}" class="nav-link">
+                    <span class="nav-icon">⚙</span>
+                    Administración
+                </a>
+                {% endif %}
+
+                <a href="{{ url_for('perfil') }}" class="nav-link">
+                    <span class="nav-icon">♙</span>
+                    Mi perfil
+                </a>
+
+                <a href="{{ url_for('logout') }}" class="nav-link">
+                    <span class="nav-icon">⏻</span>
+                    Cerrar sesión
+                </a>
+            </div>
+
+            <div class="sidebar-bottom">
+                <div class="system-status">
+                    <span class="status-dot"></span>
+                    Sesión autenticada
+                </div>
+
+                <p>Proyecto académico Triage</p>
+            </div>
+
+        </aside>
+        {% endif %}
+
+        <main class="main-area">
+
+            <header class="topbar">
+                <div>
+                    <span class="topbar-label">PLATAFORMA DE CIBERSEGURIDAD</span>
+                    <h2>Centro de operaciones</h2>
+                </div>
+
+                {% if session.user %}
+                <div class="topbar-user">
+                    <div class="avatar">{{ (session.user.name or session.user.username or "U")[0]|upper }}</div>
+                    <div>
+                        <strong>{{ session.user.name or session.user.username }}</strong>
+                        <span>Sesión iniciada</span>
+                    </div>
+                </div>
+                {% endif %}
+            </header>
+
+            <section class="page-content">
+                {% block content %}{% endblock %}
+            </section>
+
+            <footer class="footer">
+                TRIAGE · SISTEMA DE GESTIÓN DE INCIDENTES
+            </footer>
+
+        </main>
+
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Auditoría | Triage{% endblock %}
+
+{% block content %}
+
+<div class="page-heading">
+    <div>
+        <span class="eyebrow">TRAZABILIDAD</span>
+        <h2>Registro de auditoría</h2>
+        <p>Acciones relevantes realizadas en el sistema (últimos 200 eventos).</p>
+    </div>
+</div>
+
+<div class="content-card">
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha (UTC)</th>
+                    <th>Usuario</th>
+                    <th>Acción</th>
+                    <th>Detalle</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in registros %}
+                <tr>
+                    <td>{{ r.creado_en }}</td>
+                    <td>{{ r.usuario }}</td>
+                    <td>{{ r.accion }}</td>
+                    <td>{{ r.detalle }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4">Todavía no hay eventos registrados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Administración | Triage{% endblock %}
+
+{% block content %}
+
+<div class="page-heading">
+    <div>
+        <span class="eyebrow">ADMINISTRACIÓN</span>
+        <h2>Panel de administración</h2>
+        <p>Resumen del sistema, permisos vigentes y configuración de seguridad.</p>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <span class="stat-label">Total de incidentes</span>
+        <strong>{{ stats.total }}</strong>
+        <span class="stat-description">En toda la base de datos</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Abiertos</span>
+        <strong class="text-orange">{{ stats.abiertos }}</strong>
+        <span class="stat-description">Pendientes de atención</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">En investigación</span>
+        <strong class="text-blue">{{ stats.investigacion }}</strong>
+        <span class="stat-description">En análisis</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Resueltos</span>
+        <strong class="text-green">{{ stats.resueltos }}</strong>
+        <span class="stat-description">Cerrados</span>
+    </div>
+</div>
+
+<div class="admin-grid">
+
+    <div class="content-card">
+        <div class="table-heading">
+            <h3>Incidentes por severidad</h3>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead><tr><th>Severidad</th><th>Cantidad</th></tr></thead>
+                <tbody>
+                    {% set clase_sev = {'Alta': 'high', 'Media': 'medium', 'Baja': 'low'} %}
+                    {% for sev, n in por_severidad.items() %}
+                    <tr>
+                        <td><span class="status {{ clase_sev.get(sev, '') }}">{{ sev }}</span></td>
+                        <td>{{ n }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="content-card">
+        <div class="table-heading">
+            <h3>Configuración de seguridad</h3>
+            <p>Por seguridad no se muestran secretos ni tokens.</p>
+        </div>
+        <div class="table-container">
+            <table>
+                <tbody>
+                    {% for clave, valor in config.items() %}
+                    <tr>
+                        <td><strong>{{ clave }}</strong></td>
+                        <td>{{ valor }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<div class="content-card">
+    <div class="table-heading">
+        <h3>Permisos por rol (aplicados por el servidor)</h3>
+        <p>C = crear · R = leer · U = actualizar · D = eliminar</p>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Recurso</th>
+                    <th>Rol</th>
+                    <th>Permisos</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for recurso, roles in permisos.items() %}
+                {% for rol, acciones in roles.items() %}
+                <tr>
+                    <td>{{ recurso }}</td>
+                    <td>{{ rol }}</td>
+                    <td>{{ acciones }}</td>
+                </tr>
+                {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p class="demo-note">
+        Las cuentas, contraseñas y asignación de roles se gestionan en el proveedor
+        de identidad (Keycloak), no en esta aplicación.
+    </p>
+</div>
+
+<div class="content-card">
+    <div class="table-heading">
+        <h3>Últimos eventos de auditoría</h3>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha (UTC)</th>
+                    <th>Usuario</th>
+                    <th>Acción</th>
+                    <th>Detalle</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in recientes %}
+                <tr>
+                    <td>{{ r.creado_en }}</td>
+                    <td>{{ r.usuario }}</td>
+                    <td>{{ r.accion }}</td>
+                    <td>{{ r.detalle }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4">Todavía no hay eventos registrados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p class="demo-note"><a href="{{ url_for('auditoria') }}">Ver registro completo</a></p>
+</div>
+
+{% endblock %}

@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Incidentes | Triage{% endblock %}
+
+{% block content %}
+
+{% with mensajes = get_flashed_messages() %}
+{% if mensajes %}
+<div class="flash-ok">
+    {% for mensaje in mensajes %}<p>{{ mensaje }}</p>{% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<div class="page-heading">
+    <div>
+        <span class="eyebrow">CENTRO DE OPERACIONES DE SEGURIDAD</span>
+        <h2>Gestión de incidentes</h2>
+        <p>Supervisa, consulta y da seguimiento a los incidentes de seguridad.</p>
+    </div>
+    {% if puede('incidentes', 'C') %}
+    <a class="primary-button" href="{{ url_for('nuevo_incidente') }}">+ Nuevo incidente</a>
+    {% endif %}
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card"><span class="stat-label">Total de incidentes</span><strong>{{ stats.total }}</strong><span class="stat-description">Registros visibles para tu rol</span></div>
+    <div class="stat-card"><span class="stat-label">Abiertos</span><strong class="text-orange">{{ stats.abiertos }}</strong><span class="stat-description">Pendientes de atención</span></div>
+    <div class="stat-card"><span class="stat-label">En investigación</span><strong class="text-blue">{{ stats.investigacion }}</strong><span class="stat-description">En proceso de análisis</span></div>
+    <div class="stat-card"><span class="stat-label">Resueltos</span><strong class="text-green">{{ stats.resueltos }}</strong><span class="stat-description">Atendidos y cerrados</span></div>
+</div>
+
+{% set clase_sev = {'Alta': 'high', 'Media': 'medium', 'Baja': 'low'} %}
+{% set clase_est = {'Abierto': 'open', 'En investigación': 'investigating', 'Resuelto': 'resolved'} %}
+{% set puede_editar = puede('incidentes', 'U') %}
+{% set puede_eliminar = puede('incidentes', 'D') %}
+{% set columnas = 6 + (1 if puede_editar else 0) + (1 if puede_eliminar else 0) %}
+
+<div class="content-card">
+    <div class="table-heading"><div><h3>Listado de incidentes</h3><p>Registros almacenados en la base de datos del sistema.</p></div></div>
+    <div class="table-container">
+        <table>
+            <thead><tr>
+                <th>ID</th><th>Incidente</th><th>Severidad</th><th>Estado</th><th>Registrado por</th><th>Fecha (UTC)</th>
+                {% if puede_editar %}<th>Actualizar estado</th>{% endif %}
+                {% if puede_eliminar %}<th>Eliminar</th>{% endif %}
+            </tr></thead>
+            <tbody>
+            {% for i in incidentes %}
+                <tr>
+                    <td>#INC-{{ '%03d'|format(i.id) }}</td>
+                    <td>{{ i.titulo }}</td>
+                    <td><span class="status {{ clase_sev.get(i.severidad, '') }}">{{ i.severidad }}</span></td>
+                    <td><span class="status {{ clase_est.get(i.estado, '') }}">{{ i.estado }}</span></td>
+                    <td>{{ i.creado_por_nombre or i.creado_por }}</td>
+                    <td>{{ i.creado_en }}</td>
+                    {% if puede_editar %}
+                    <td>
+                        <form class="inline-form" method="post" action="{{ url_for('cambiar_estado', incidente_id=i.id) }}">
+                            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                            <select name="estado" aria-label="Estado del incidente">
+                                {% for e in estados %}<option value="{{ e }}" {% if e == i.estado %}selected{% endif %}>{{ e }}</option>{% endfor %}
+                            </select>
+                            <button type="submit" class="small-button">Guardar</button>
+                        </form>
+                    </td>
+                    {% endif %}
+                    {% if puede_eliminar %}
+                    <td>
+                        <form method="post" action="{{ url_for('borrar_incidente', incidente_id=i.id) }}" onsubmit="return confirm('¿Seguro que deseas eliminar este incidente y sus comentarios? Esta acción no se puede deshacer.');">
+                            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                            <button type="submit" class="small-button">Eliminar</button>
+                        </form>
+                    </td>
+                    {% endif %}
+                </tr>
+                <tr><td colspan="{{ columnas }}">
+                    <details class="incident-description">
+                        <summary>Ver descripción del incidente</summary>
+                        <div class="description-content" style="white-space: pre-wrap; overflow-wrap: anywhere; padding: 10px 0;">{{ i.descripcion }}</div>
+                    </details>
+                    {% if puede_editar %}
+                    <details class="incident-edit" style="margin-top: 10px;">
+                        <summary>Editar incidente</summary>
+                        <form method="post" action="{{ url_for('editar_incidente', incidente_id=i.id) }}" style="display:grid; gap:10px; max-width:700px; padding:12px 0;">
+                            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                            <label>Título
+                                <input type="text" name="titulo" maxlength="120" required value="{{ i.titulo }}">
+                            </label>
+                            <label>Descripción
+                                <textarea name="descripcion" maxlength="2000" rows="4" required>{{ i.descripcion }}</textarea>
+                            </label>
+                            <label>Severidad
+                                <select name="severidad" required>
+                                    {% for s in ['Alta', 'Media', 'Baja'] %}<option value="{{ s }}" {% if s == i.severidad %}selected{% endif %}>{{ s }}</option>{% endfor %}
+                                </select>
+                            </label>
+                            <button type="submit" class="small-button">Guardar cambios</button>
+                        </form>
+                    </details>
+                    {% endif %}
+                    <details class="incident-comments" style="margin-top:10px;">
+                        <summary>Comentarios ({{ comentarios_por_incidente[i.id]|length }})</summary>
+                        {% for c in comentarios_por_incidente[i.id] %}
+                        <div class="comment-item">
+                            <p>{{ c.contenido }}</p>
+                            <small>{{ c.creado_por_nombre or c.creado_por }} · {{ c.creado_en }} UTC</small>
+                            {% if puede('comentarios', 'U') %}
+                            <form method="post" action="{{ url_for('editar_comentario', comentario_id=c.id) }}">
+                                <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                                <textarea name="contenido" maxlength="2000" required>{{ c.contenido }}</textarea>
+                                <button type="submit" class="small-button">Actualizar comentario</button>
+                            </form>
+                            {% endif %}
+                            {% if puede('comentarios', 'D') %}
+                            <form method="post" action="{{ url_for('borrar_comentario', comentario_id=c.id) }}" onsubmit="return confirm('¿Eliminar este comentario?');">
+                                <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                                <button type="submit" class="small-button">Eliminar comentario</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                        {% else %}<p>Aún no hay comentarios.</p>{% endfor %}
+                        {% if puede('comentarios', 'C') %}
+                        <form method="post" action="{{ url_for('nuevo_comentario', incidente_id=i.id) }}">
+                            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                            <textarea name="contenido" maxlength="2000" required placeholder="Escribe un comentario..."></textarea>
+                            <button type="submit" class="small-button">Agregar comentario</button>
+                        </form>
+                        {% endif %}
+                    </details>
+                </td></tr>
+            {% else %}
+                <tr><td colspan="{{ columnas }}">Todavía no hay incidentes registrados.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

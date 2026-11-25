@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Panel principal | Triage{% endblock %}
+
+{% block content %}
+
+<div class="page-heading">
+    <div>
+        <span class="eyebrow">RESUMEN GENERAL</span>
+        <h2>Panel principal</h2>
+        <p>Bienvenido a tu centro de gestión de incidentes.</p>
+    </div>
+</div>
+
+{% if stats %}
+<div class="stats-grid">
+
+    <div class="stat-card">
+        <span class="stat-label">Incidentes registrados</span>
+        <strong>{{ stats.total }}</strong>
+        <span class="stat-description">{% if publico %}Total general{% else %}Visibles para tu rol{% endif %}</span>
+    </div>
+
+    <div class="stat-card">
+        <span class="stat-label">Incidentes abiertos</span>
+        <strong class="text-orange">{{ stats.abiertos }}</strong>
+        <span class="stat-description">Requieren atención</span>
+    </div>
+
+    <div class="stat-card">
+        <span class="stat-label">En investigación</span>
+        <strong class="text-blue">{{ stats.investigacion }}</strong>
+        <span class="stat-description">Análisis en proceso</span>
+    </div>
+
+    <div class="stat-card">
+        <span class="stat-label">Incidentes resueltos</span>
+        <strong class="text-green">{{ stats.resueltos }}</strong>
+        <span class="stat-description">Cerrados</span>
+    </div>
+
+</div>
+{% endif %}
+
+<div class="content-card">
+    <h3>Bienvenido a Triage</h3>
+
+    <p>
+        Desde este panel podrás acceder a las secciones del sistema
+        de gestión de incidentes de ciberseguridad que tu rol permite.
+    </p>
+
+    {% if puede('incidentes', 'R') %}
+    <a class="button" href="{{ url_for('incidentes') }}">
+        Consultar incidentes
+    </a>
+    {% elif publico %}
+    <p class="notice">
+        Tu rol de invitado solo permite consultar estadísticas públicas.
+        No tienes acceso al detalle de los incidentes.
+    </p>
+    {% else %}
+    <p class="notice">Tu rol actual no tiene acceso a la gestión de incidentes.</p>
+    {% endif %}
+</div>
+
+{% endblock %}
