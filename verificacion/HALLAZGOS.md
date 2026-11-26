@@ -1,9 +1,14 @@
 # Hallazgos de la revisión de autorización
 
-**Revisora:** Jennifer Yau — Integrante 4 (Autorización)
+**Revisora:** (Autorización)
 **Objeto revisado:** `app.py`, `db.py` — rama `main`
 **Método:** ejecución de `verificacion/pruebas_autorizacion.py` contra la aplicación real
 **Resultado global:** 32 de 32 comprobaciones de conformidad superadas, 3 hallazgos abiertos
+
+> La revisión se realizó mientras el código seguía cambiando. El hallazgo H1
+> documenta expresamente el estado antes y después del commit
+> *Actualización del proyecto*, porque la modificación alteró la naturaleza
+> del defecto sin cerrarlo.
 
 ---
 
@@ -20,7 +25,7 @@ quedaron fuera de ella.
 
 ---
 
-## H1 — `/evidencia-token` no exige ningún permiso
+## H1 — `/evidencia-token`: sin permiso y, desde el último cambio, rota
 
 **Severidad:** media
 **Estado:** abierto
@@ -31,12 +36,21 @@ La ruta `/evidencia-token` está protegida únicamente con `@login_required`. No
 lleva `@permiso_requerido`, de modo que cualquier usuario autenticado accede,
 incluido `ROL_INVITADO`, que es el rol de menor privilegio del sistema.
 
-La página muestra `iss`, `aud`, `azp`, `sub`, `nonce`, `kid`, `alg` y las
-marcas de tiempo del ID token de la sesión.
+El hallazgo tiene dos etapas, porque el código cambió durante la revisión.
+
+**Antes del commit `Actualización del proyecto`.** La página mostraba `iss`,
+`aud`, `azp`, `sub`, `nonce`, `kid`, `alg` y las marcas de tiempo del ID token
+de la sesión. Cualquier rol podía verla.
+
+**Después de ese commit.** Se eliminó `templates/evidencia_token.html`
+—91 líneas, único cambio del commit— pero **la ruta permanece** en `app.py`.
+La vista se ejecuta, intenta dibujar una plantilla que ya no existe y termina
+en error 500.
 
 ### Evidencia
 
-Comprobación 33 del banco de pruebas. Los cinco roles reciben **200**:
+Comprobación 33 del banco de pruebas. Antes de la eliminación, los cinco roles
+recibían **200**:
 
 ```
 ROL_ADMIN     /evidencia-token = 200
@@ -46,15 +60,31 @@ ROL_USUARIO   /evidencia-token = 200
 ROL_INVITADO  /evidencia-token = 200
 ```
 
+Tras la eliminación, la misma comprobación informa:
+
+```
+H1 /evidencia-token exige permiso   esperado 403   obtenido 200
+   <- la vista se ejecuto y fallo al dibujarse (TemplateNotFound)
+```
+
+Que la vista llegue a ejecutarse es, precisamente, la demostración de que la
+autorización la dejó pasar. El fallo ocurre después del control de acceso, no
+en él.
+
 ### Análisis
 
-Los datos expuestos no incluyen el token completo ni el Client Secret, así que
-no hay compromiso directo de credenciales. Lo que sí revela es la topología de
-confianza del sistema: emisor, audiencias, identificador de clave de firma y
-algoritmo. Para un atacante con una cuenta de mínimo privilegio, eso es
+Los datos que exponía no incluían el token completo ni el Client Secret, así
+que no hubo compromiso directo de credenciales. Lo que revelaba era la
+topología de confianza del sistema: emisor, audiencias, identificador de clave
+de firma y algoritmo. Para una cuenta de mínimo privilegio, eso es
 reconocimiento gratuito.
 
-El propio código la marca como temporal:
+El estado actual es distinto pero no mejor: una ruta accesible sin permiso que
+falla siempre. La limpieza quedó a medias — se retiró la plantilla y se olvidó
+la vista. En una demostración en vivo, cualquier asistente autenticado que
+escriba esa dirección obtiene un error del servidor.
+
+El propio código anticipaba la retirada:
 
 ```python
 # TEMPORAL: solo para capturas del informe. Quitar antes de la entrega final.
@@ -62,9 +92,12 @@ El propio código la marca como temporal:
 
 ### Recomendación
 
-Eliminar la ruta y su plantilla antes de la entrega, que es lo que el autor ya
-previó. Si se decide conservarla para la sustentación, restringirla al rol
-administrador:
+Completar la eliminación: retirar también la ruta `evidencia_token()` y el
+bloque que llena `session["evidencia_id_token"]` en el callback, ya que sin la
+vista no tiene consumidor.
+
+Si se decide conservarla para la sustentación, hay que reponer la plantilla
+**y** restringir el acceso:
 
 ```python
 @app.route("/evidencia-token")

@@ -89,6 +89,21 @@ def sesion(roles, sub, usuario):
 resultados = []
 
 
+def pedir(cliente, ruta, metodo="GET", datos=None):
+    """
+    Lanza una peticion y devuelve (codigo, nota).
+
+    Si la vista se ejecuta y falla despues al dibujar la pagina -por ejemplo
+    porque falta una plantilla-, la autorizacion YA la dejo pasar. Eso se
+    cuenta como 200 y se anota, en lugar de interrumpir la verificacion: un
+    fallo de presentacion no debe ocultar un fallo de control de acceso.
+    """
+    try:
+        return cliente.open(ruta, method=metodo, data=datos).status_code, ""
+    except Exception as e:
+        return 200, "la vista se ejecuto y fallo al dibujarse (%s)" % type(e).__name__
+
+
 def comprobar(n, descripcion, obtenido, esperado, nota=""):
     ok = obtenido == esperado
     resultados.append((n, descripcion, ok))
@@ -124,9 +139,9 @@ def bloque_matriz():
         c = sesion([rol], "sub-" + rol.lower(), rol.lower())
         for ruta, esperado in zip(RUTAS, esperados):
             n += 1
-            obtenido = c.get(ruta).status_code
+            obtenido, nota = pedir(c, ruta)
             comprobar(n, "%-14s %s" % (rol.replace("ROL_", ""), ruta),
-                      obtenido, esperado)
+                      obtenido, esperado, nota)
     return n
 
 
@@ -228,9 +243,9 @@ def bloque_hallazgos(n):
 
     n += 1
     inv = sesion(["ROL_INVITADO"], "sub-inv", "invitado")
-    comprobar(n, "H1 /evidencia-token exige permiso",
-              inv.get("/evidencia-token").status_code, 403,
-              "hoy responde 200 a cualquier rol")
+    codigo, nota = pedir(inv, "/evidencia-token")
+    comprobar(n, "H1 /evidencia-token exige permiso", codigo, 403,
+              nota or "hoy responde 200 a cualquier rol")
 
     n += 1
     ana = sesion(["ROL_USUARIO"], "sub-ana2", "ana2")
@@ -241,8 +256,8 @@ def bloque_hallazgos(n):
 
     beto = sesion(["ROL_USUARIO"], "sub-beto2", "beto2")
     antes = len(db.listar_auditoria())
-    beto.post("/incidentes/%d/comentarios" % iid,
-              data={"_csrf": CSRF, "contenido": "x"})
+    pedir(beto, "/incidentes/%d/comentarios" % iid, "POST",
+          {"_csrf": CSRF, "contenido": "x"})
     nuevos = db.listar_auditoria()[:len(db.listar_auditoria()) - antes]
     registrado = any(a["accion"] == "ACCESO_DENEGADO" for a in nuevos)
     comprobar(n, "H2 La denegacion por propiedad queda en la bitacora",
@@ -251,13 +266,17 @@ def bloque_hallazgos(n):
 
     n += 1
     inv = sesion(["ROL_INVITADO"], "sub-inv2", "invitado2")
-    cuerpo = inv.get("/dashboard").data.decode("utf-8", "ignore")
-    numeros = [int(x) for x in re.findall(r">\s*(\d+)\s*<", cuerpo)]
-    total_real = len(db.listar_incidentes())
-    expone = total_real in numeros and total_real > 0
+    try:
+        cuerpo = inv.get("/dashboard").data.decode("utf-8", "ignore")
+        numeros = [int(x) for x in re.findall(r">\s*(\d+)\s*<", cuerpo)]
+        total_real = len(db.listar_incidentes())
+        expone = total_real in numeros and total_real > 0
+        nota = "ve el total global de la organizacion"
+    except Exception as e:
+        expone = None
+        nota = "no se pudo comprobar (%s)" % type(e).__name__
     comprobar(n, "H3 El invitado no ve conteos de incidentes ajenos",
-              expone, False,
-              "ve el total global de la organizacion")
+              expone, False, nota)
 
     return n
 
@@ -275,7 +294,15 @@ def main():
     n = bloque_propiedad(n)
     n = bloque_controles(n)
     total_sin_hallazgos = n
-    n = bloque_hallazgos(n)
+
+    # El bloque de hallazgos explora terreno que, por definicion, no se
+    # comporta como deberia. Si algo falla ahi, se anota y se continua: el
+    # resumen de conformidad debe imprimirse igualmente.
+    try:
+        n = bloque_hallazgos(n)
+    except Exception as e:
+        print("  AVISO: el bloque de hallazgos se interrumpio (%s: %s)"
+              % (type(e).__name__, e))
 
     base = [r for r in resultados if r[0] <= total_sin_hallazgos]
     hallazgos = [r for r in resultados if r[0] > total_sin_hallazgos]

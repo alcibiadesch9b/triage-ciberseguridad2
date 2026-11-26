@@ -1,6 +1,6 @@
 # Verificación del control de acceso
 
-**Responsable:** Jennifer Yau — Integrante 4
+**Responsable:** Jennifer Yau 
 **Fase:** 5 — Autorización basada en roles (RBAC)
 **Asignatura:** Ciberseguridad II — Universidad Tecnológica de Panamá
 
@@ -67,7 +67,7 @@ aplicación.
 
 | # | Hallazgo | Severidad |
 |---|---|:---:|
-| H1 | `/evidencia-token` no exige ningún permiso; accesible hasta para `ROL_INVITADO` | Media |
+| H1 | `/evidencia-token` no exige ningún permiso, y tras eliminarse su plantilla la ruta quedó rota (error 500) | Media |
 | H2 | Las denegaciones por propiedad (404) no quedan en la bitácora | Media |
 | H3 | `ROL_INVITADO` está fuera de la matriz y recibe conteos globales | Baja |
 
